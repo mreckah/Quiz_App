@@ -73,3 +73,15 @@ quiz_ap/
 - Provides option to retry quiz or logout
   
 ![score](https://github.com/user-attachments/assets/04d61473-0dab-4a30-a282-fcd7e0deaca0)
+
+
+### Firebase Integration
+- Firebase is used for user authentication and storing the quiz scores.
+- The app communicates with Firebase to create and authenticate users and record their quiz scores.
+  
+![image](https://github.com/user-attachments/assets/94742128-5edd-4811-a038-1edb0f7b6e9d)
+
+![image](https://github.com/user-attachments/assets/4f76c440-1f02-47b3-b311-fd229eadaa67)
+
+## Acknowledgements
+This project was developed as part of the Mobile Development module at ENSET Mohammedia under the supervision of Madame OUHMIDA.
