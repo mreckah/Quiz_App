@@ -1,7 +1,7 @@
 # Quiz App
 <h1 align="center">
-  <a href="https://github.com/mreckah">
-    <img height="120" src="![img_1](https://github.com/user-attachments/assets/bd41c383-c04b-451c-bc6f-9d26b20ab8f1)" alt="QUizApp" style="max-width: 300px ; border-radius: 10px;">
+  <a>
+    <img height="120" src="https://github.com/user-attachments/assets/bd41c383-c04b-451c-bc6f-9d26b20ab8f1" alt="QuizApp" style="max-width: 300px; border-radius: 10px;">
   </a>
 </h1>
 
@@ -52,11 +52,13 @@ quiz_ap/
 ### LoginActivity
 - Handles user authentication
 - Provides option to navigate to registration
+
 ![login](https://github.com/user-attachments/assets/dea67caf-7ed7-49e9-9679-efc0e4279ab3)
 
 ### RegisterActivity
 - Allows new users to create an account
 - Validates user input
+  
 ![register](https://github.com/user-attachments/assets/3ab8980c-8b27-4785-800d-599c2ee46840)
 ### QuizActivity
 - Main quiz interface
@@ -64,8 +66,10 @@ quiz_ap/
 - 1-minute timer for each question
 - Handles question navigation with animation
 - Tracks user score
+  
 ![quiz](https://github.com/user-attachments/assets/130e4b2c-5318-4f50-bc75-88237700400c)
 ### ScoreActivity
 - Displays final quiz score
 - Provides option to retry quiz or logout
+  
 ![score](https://github.com/user-attachments/assets/04d61473-0dab-4a30-a282-fcd7e0deaca0)
