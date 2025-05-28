@@ -3,30 +3,33 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@drawable/img_7"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="@drawable/img_7">
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp">
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:id="@+id/usernameTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/colorPrimary"/>
+
         <TextView
             android:id="@+id/chronometer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:text="Time: 01:00" />
-
-        <TextView
-            android:id="@+id/usernameTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-    </RelativeLayout>
+            android:textColor="@color/colorPrimary"/>
+    </LinearLayout>
 
     <ImageView
         android:id="@+id/logoImageView"
@@ -41,45 +44,48 @@
         android:id="@+id/questionTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
-        android:textSize="20sp"
+        android:textSize="24sp"
         android:textStyle="bold"
         android:gravity="center"
-        android:text="Question goes here" />
+        android:layout_marginBottom="32dp"
+        android:textColor="@color/colorPrimary"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
     <Button
         android:id="@+id/option1Button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:text="Option 1" />
+            android:layout_marginBottom="8dp"/>
 
     <Button
         android:id="@+id/option2Button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:text="Option 2" />
+            android:layout_marginBottom="8dp"/>
 
     <Button
         android:id="@+id/option3Button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:text="Option 3" />
+            android:layout_marginBottom="8dp"/>
 
     <Button
         android:id="@+id/option4Button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
-        android:text="Option 4" />
+            android:layout_marginBottom="24dp"/>
 
     <Button
         android:id="@+id/nextButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Next"
-        android:enabled="false" />
+            android:enabled="false"/>
+
+    </LinearLayout>
 
 </LinearLayout> 

@@ -6,15 +6,20 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.button.MaterialButton;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class LoginActivity extends AppCompatActivity {
     private TextInputEditText emailEditText, passwordEditText;
     private MaterialButton loginButton, registerButton;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        // Initialize Firebase Auth
+        mAuth = FirebaseAuth.getInstance();
 
         emailEditText = findViewById(R.id.emailEditText);
         passwordEditText = findViewById(R.id.passwordEditText);
@@ -36,14 +41,28 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
 
-            // Here you would typically validate credentials against a backend
-            // For now, we'll just proceed to the quiz
+            // Show loading state
+            loginButton.setEnabled(false);
+            loginButton.setText("Logging in...");
+
+            // Sign in with Firebase
+            mAuth.signInWithEmailAndPassword(inputEmail, password)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        // Sign in success
+                        String username = inputEmail.split("@")[0];
             Intent intent = new Intent(LoginActivity.this, QuizActivity.class);
-            // Extract username from email (everything before @)
-            String username = inputEmail.split("@")[0];
             intent.putExtra("USERNAME", username);
             startActivity(intent);
             finish();
+                    } else {
+                        // If sign in fails, display a message to the user.
+                        Toast.makeText(LoginActivity.this, "Authentication failed: " + task.getException().getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                        loginButton.setEnabled(true);
+                        loginButton.setText("Login");
+                    }
+                });
         });
 
         registerButton.setOnClickListener(v -> {

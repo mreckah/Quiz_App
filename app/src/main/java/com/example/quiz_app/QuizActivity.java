@@ -6,16 +6,19 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
 import android.widget.Button;
-import android.widget.Chronometer;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class QuizActivity extends AppCompatActivity {
+    private static final String TAG = "QuizActivity";
     private TextView questionTextView;
     private TextView usernameTextView;
     private TextView timerTextView;
@@ -24,9 +27,11 @@ public class QuizActivity extends AppCompatActivity {
     private int currentQuestionIndex = 0;
     private int score = 0;
     private boolean isAnswerSelected = false;
-    private long timeElapsed = 0;
+    private long startTime;
     private CountDownTimer countDownTimer;
     private static final long QUIZ_TIME_MILLIS = 60000; // 1 minute in milliseconds
+    private String username;
+    private DatabaseReference scoresRef;
 
     // Questions: question, option1, option2, option3, option4, correctOptionIndex
     // (1-based)
@@ -45,6 +50,11 @@ public class QuizActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_quiz);
 
+        try {
+            // Initialize Firebase Database reference
+            scoresRef = FirebaseDatabase.getInstance().getReference("scores");
+
+            // Initialize views
         questionTextView = findViewById(R.id.questionTextView);
         usernameTextView = findViewById(R.id.usernameTextView);
         timerTextView = findViewById(R.id.chronometer);
@@ -56,39 +66,75 @@ public class QuizActivity extends AppCompatActivity {
         };
         nextButton = findViewById(R.id.nextButton);
 
-        // Set usernam from intent
-        String username = getIntent().getStringExtra("USERNAME");
+            // Set username from intent
+            username = getIntent().getStringExtra("USERNAME");
         if (username != null) {
             usernameTextView.setText("Welcome, " + username);
         }
 
+            // Start quiz
+            startTime = SystemClock.elapsedRealtime();
         startTimer();
-
         displayQuestion();
 
-        for (Button button : optionButtons) {
-            button.setOnClickListener(v -> {
-                if (isAnswerSelected)
-                    return;
+            // Set up option button click listeners
+            for (int i = 0; i < optionButtons.length; i++) {
+                final int buttonIndex = i;
+                optionButtons[i].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        try {
+                            if (!isAnswerSelected) {
+                                handleOptionClick(v);
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error in option click: " + e.getMessage());
+                            Toast.makeText(QuizActivity.this, "Error selecting answer. Please try again.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
 
+            // Set up next button click listener
+            nextButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    try {
+                        handleNextClick();
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error in next click: " + e.getMessage());
+                        Toast.makeText(QuizActivity.this, "Error moving to next question. Please try again.",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "Error in onCreate: " + e.getMessage());
+            Toast.makeText(this, "Error initializing quiz. Please try again.", Toast.LENGTH_SHORT).show();
+            finish();
+        }
+    }
+
+    private void handleOptionClick(View v) {
                 Button clickedButton = (Button) v;
                 String selectedAnswer = clickedButton.getText().toString();
                 int correctIndex = Integer.parseInt(questions[currentQuestionIndex][5]) - 1;
                 String correctAnswer = questions[currentQuestionIndex][correctIndex + 1];
 
-                // Disable all buttons
+        // Disable all option buttons
                 for (Button b : optionButtons) {
                     b.setEnabled(false);
                 }
 
-                // Show animation and color feedback
+        // Show feedback
                 if (selectedAnswer.equals(correctAnswer)) {
                     score++;
                     clickedButton.setBackgroundColor(Color.GREEN);
                     showFeedbackAnimation("Correct!", Color.GREEN);
                 } else {
                     clickedButton.setBackgroundColor(Color.RED);
-                    // Find and highlight correct answer
+            // Show correct answer
                     for (Button b : optionButtons) {
                         if (b.getText().toString().equals(correctAnswer)) {
                             b.setBackgroundColor(Color.GREEN);
@@ -100,20 +146,20 @@ public class QuizActivity extends AppCompatActivity {
 
                 isAnswerSelected = true;
                 nextButton.setEnabled(true);
-            });
         }
 
-        nextButton.setOnClickListener(v -> {
+    private void handleNextClick() {
+        if (currentQuestionIndex < questions.length - 1) {
             currentQuestionIndex++;
-            if (currentQuestionIndex < questions.length) {
                 displayQuestion();
+            startTimer();
             } else {
-                // Stop countdown timer and get elapsed time
+            // Quiz completed
                 if (countDownTimer != null) {
                     countDownTimer.cancel();
                 }
-                timeElapsed = SystemClock.elapsedRealtime() - SystemClock.uptimeMillis();
-
+            long timeElapsed = SystemClock.elapsedRealtime() - startTime;
+            saveScore();
                 Intent intent = new Intent(QuizActivity.this, ScoreActivity.class);
                 intent.putExtra("SCORE", score);
                 intent.putExtra("TOTAL_QUESTIONS", questions.length);
@@ -121,47 +167,68 @@ public class QuizActivity extends AppCompatActivity {
                 startActivity(intent);
                 finish();
             }
-        });
     }
 
     private void startTimer() {
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
+        }
+
         countDownTimer = new CountDownTimer(QUIZ_TIME_MILLIS, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
-                // Update timer text
-                int seconds = (int) (millisUntilFinished / 1000);
-                timerTextView.setText(String.format("Time: %02d:%02d", seconds / 60, seconds % 60));
+                timerTextView.setText(String.format("%02d:%02d",
+                        millisUntilFinished / 1000 / 60,
+                        millisUntilFinished / 1000 % 60));
             }
 
             @Override
             public void onFinish() {
-                // Time's up! Go to score screen
-                goToScoreScreen();
+                if (!isAnswerSelected) {
+                    moveToNextQuestion();
+                }
             }
         }.start();
     }
 
-    private void goToScoreScreen() {
-        if (countDownTimer != null) {
-            countDownTimer.cancel();
-        }
+    private void moveToNextQuestion() {
+        if (currentQuestionIndex < questions.length - 1) {
+            currentQuestionIndex++;
+            displayQuestion();
+            startTimer();
+        } else {
+            // Quiz completed
+            saveScore();
         Intent intent = new Intent(QuizActivity.this, ScoreActivity.class);
         intent.putExtra("SCORE", score);
         intent.putExtra("TOTAL_QUESTIONS", questions.length);
-        intent.putExtra("TIME_ELAPSED", timeElapsed);
         startActivity(intent);
         finish();
+        }
+    }
+
+    private void saveScore() {
+        if (username != null) {
+            DatabaseReference userScoreRef = scoresRef.child(username);
+            userScoreRef.child("username").setValue(username);
+            userScoreRef.child("score").setValue(score);
+        }
     }
 
     private void displayQuestion() {
+        // Reset state
+        isAnswerSelected = false;
+        nextButton.setEnabled(false);
+
+        // Set question text
         questionTextView.setText(questions[currentQuestionIndex][0]);
+
+        // Set option buttons
         for (int i = 0; i < 4; i++) {
             optionButtons[i].setText(questions[currentQuestionIndex][i + 1]);
             optionButtons[i].setEnabled(true);
             optionButtons[i].setBackgroundColor(Color.parseColor("#6200EE")); // Reset to default color
         }
-        nextButton.setEnabled(false);
-        isAnswerSelected = false;
     }
 
     private void showFeedbackAnimation(String message, int color) {
@@ -171,24 +238,18 @@ public class QuizActivity extends AppCompatActivity {
         feedbackText.setTextSize(24);
         feedbackText.setAlpha(0f);
 
-        // Get the parent ViewGroup (LinearLayout)
         ViewGroup parent = (ViewGroup) questionTextView.getParent();
-
-        // Add to layout
         parent.addView(feedbackText);
 
-        // Create fade in animation
         AlphaAnimation fadeIn = new AlphaAnimation(0f, 1f);
         fadeIn.setDuration(500);
         fadeIn.setFillAfter(true);
 
-        // Create fade out animation
         AlphaAnimation fadeOut = new AlphaAnimation(1f, 0f);
         fadeOut.setDuration(500);
         fadeOut.setStartOffset(1000);
         fadeOut.setFillAfter(true);
 
-        // Start animations
         feedbackText.startAnimation(fadeIn);
         new Handler().postDelayed(() -> {
             feedbackText.startAnimation(fadeOut);

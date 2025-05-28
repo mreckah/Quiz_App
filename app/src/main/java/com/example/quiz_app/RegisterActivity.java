@@ -6,15 +6,20 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.button.MaterialButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.UserProfileChangeRequest;
 
 public class RegisterActivity extends AppCompatActivity {
     private TextInputEditText nameEditText, emailEditText, passwordEditText;
     private MaterialButton registerButton;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
+
+        mAuth = FirebaseAuth.getInstance();
 
         nameEditText = findViewById(R.id.nameEditText);
         emailEditText = findViewById(R.id.emailEditText);
@@ -31,16 +36,44 @@ public class RegisterActivity extends AppCompatActivity {
                 return;
             }
 
-            // Here you would typically register the user with a backend
-            // For now, we'll just show success message and go to login
-            Toast.makeText(this, "Registration successful! Please login.", Toast.LENGTH_SHORT).show();
+            // Show loading state
+            registerButton.setEnabled(false);
+            registerButton.setText("Registering...");
 
-            // Navigate to login screen
-            Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
-            // Pass the email to pre-fill the login form
-            intent.putExtra("EMAIL", email);
-            startActivity(intent);
-            finish();
+            // Create user with Firebase
+            mAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        // Update user profile with name
+                        UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                            .setDisplayName(name)
+                            .build();
+
+                        mAuth.getCurrentUser().updateProfile(profileUpdates)
+                            .addOnCompleteListener(profileTask -> {
+                                if (profileTask.isSuccessful()) {
+                                    Toast.makeText(RegisterActivity.this, "Registration successful! Please login.",
+                                            Toast.LENGTH_SHORT).show();
+                                    // Navigate to login screen
+                                    Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+                                    intent.putExtra("EMAIL", email);
+                                    startActivity(intent);
+                                    finish();
+                                } else {
+                                    Toast.makeText(RegisterActivity.this, "Failed to update profile: " + profileTask.getException().getMessage(),
+                                            Toast.LENGTH_SHORT).show();
+                                    registerButton.setEnabled(true);
+                                    registerButton.setText("Register");
+                                }
+                            });
+                    } else {
+                        // If registration fails, display a message to the user.
+                        Toast.makeText(RegisterActivity.this, "Registration failed: " + task.getException().getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                        registerButton.setEnabled(true);
+                        registerButton.setText("Register");
+                    }
+                });
         });
     }
 }
