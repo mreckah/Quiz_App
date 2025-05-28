@@ -5,6 +5,9 @@
   </a>
 </h1>
 
+## Video Demo 
+https://github.com/user-attachments/assets/39ddc4da-67de-42a3-bdd5-c1ee3b90956f
+
 ## Description
 The Quiz App is an Android application that allows users to take quizzes on various topics. It provides a seamless user experience with smooth transitions between different activity.
 
